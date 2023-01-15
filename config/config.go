@@ -323,13 +323,13 @@ func Parse(buf []byte) (*Config, error) {
 func UnmarshalRawConfig(buf []byte) (*RawConfig, error) {
 	// config with default value
 	rawCfg := &RawConfig{
-		AllowLan:        false,
+		AllowLan:        true,
 		BindAddress:     "*",
 		IPv6:            true,
 		Mode:            T.Rule,
 		GeodataMode:     C.GeodataMode,
 		GeodataLoader:   "memconservative",
-		UnifiedDelay:    false,
+		UnifiedDelay:    true,
 		Authentication:  []string{},
 		LogLevel:        log.INFO,
 		Hosts:           map[string]string{},
@@ -370,32 +370,25 @@ func UnmarshalRawConfig(buf []byte) (*RawConfig, error) {
 			Bypass:           []string{},
 		},
 		DNS: RawDNS{
-			Enable:       false,
+			Enable:       true,
 			IPv6:         false,
 			UseHosts:     true,
 			EnhancedMode: C.DNSMapping,
 			FakeIPRange:  "198.18.0.1/16",
 			FallbackFilter: RawFallbackFilter{
-				GeoIP:     true,
-				GeoIPCode: "CN",
+				GeoIP:     false,
+				GeoIPCode: "",
 				IPCIDR:    []string{},
 				GeoSite:   []string{},
 			},
 			DefaultNameserver: []string{
-				"114.114.114.114",
-				"223.5.5.5",
 				"8.8.8.8",
 				"1.0.0.1",
 			},
 			NameServer: []string{
-				"https://doh.pub/dns-query",
-				"tls://223.5.5.5:853",
+				"1.1.1.1",
 			},
-			FakeIPFilter: []string{
-				"dns.msftnsci.com",
-				"www.msftnsci.com",
-				"www.msftconnecttest.com",
-			},
+			FakeIPFilter: []string{},
 		},
 		Sniffer: RawSniffer{
 			Enable:          false,
