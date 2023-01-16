@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
+	N "github.com/Dreamacro/clash/common/net"
 	"github.com/Dreamacro/clash/component/dialer"
 	tlsC "github.com/Dreamacro/clash/component/tls"
 	C "github.com/Dreamacro/clash/constant"
@@ -95,7 +96,7 @@ func (t *Trojan) StreamConn(c net.Conn, metadata *C.Metadata) (net.Conn, error) 
 		return c, err
 	}
 	err = t.instance.WriteHeader(c, trojan.CommandTCP, serializesSocksAddr(metadata))
-	return c, err
+	return N.NewExtendedConn(c), err
 }
 
 // DialContext implements C.ProxyAdapter

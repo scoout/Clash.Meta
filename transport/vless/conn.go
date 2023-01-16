@@ -1,12 +1,14 @@
 package vless
 
 import (
-	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
 	"net"
+
+	"github.com/Dreamacro/clash/common/buf"
+	N "github.com/Dreamacro/clash/common/net"
 
 	"github.com/gofrs/uuid"
 	xtls "github.com/xtls/go"
@@ -14,7 +16,7 @@ import (
 )
 
 type Conn struct {
-	net.Conn
+	N.ExtendedConn
 	dst      *DstAddr
 	id       *uuid.UUID
 	addons   *Addons
@@ -23,57 +25,82 @@ type Conn struct {
 
 func (vc *Conn) Read(b []byte) (int, error) {
 	if vc.received {
-		return vc.Conn.Read(b)
+		return vc.ExtendedConn.Read(b)
 	}
 
 	if err := vc.recvResponse(); err != nil {
 		return 0, err
 	}
 	vc.received = true
-	return vc.Conn.Read(b)
+	return vc.ExtendedConn.Read(b)
 }
 
-func (vc *Conn) sendRequest() error {
-	buf := &bytes.Buffer{}
+func (vc *Conn) ReadBuffer(buffer *buf.Buffer) error {
+	if vc.received {
+		return vc.ExtendedConn.ReadBuffer(buffer)
+	}
 
-	buf.WriteByte(Version)   // protocol version
-	buf.Write(vc.id.Bytes()) // 16 bytes of uuid
+	if err := vc.recvResponse(); err != nil {
+		return err
+	}
+	vc.received = true
+	return vc.ExtendedConn.ReadBuffer(buffer)
+}
 
+func (vc *Conn) sendRequest() (err error) {
+	requestLen := 1  // protocol version
+	requestLen += 16 // UUID
+	requestLen += 1  // addons length
+	var addonsBytes []byte
 	if vc.addons != nil {
-		bytes, err := proto.Marshal(vc.addons)
+		addonsBytes, err = proto.Marshal(vc.addons)
 		if err != nil {
 			return err
 		}
-
-		buf.WriteByte(byte(len(bytes)))
-		buf.Write(bytes)
-	} else {
-		buf.WriteByte(0) // addon data length. 0 means no addon data
 	}
+	requestLen += len(addonsBytes)
+	requestLen += 1 // command
+	if !vc.dst.Mux {
+		requestLen += 2 // port
+		requestLen += 1 // addr type
+		requestLen += len(vc.dst.Addr)
+	}
+	_buffer := buf.StackNewSize(requestLen)
+	defer buf.KeepAlive(_buffer)
+	buffer := buf.Dup(_buffer)
+	defer buffer.Release()
+
+	buf.Must(
+		buffer.WriteByte(Version),              // protocol version
+		buf.Error(buffer.Write(vc.id.Bytes())), // 16 bytes of uuid
+		buffer.WriteByte(byte(len(addonsBytes))),
+		buf.Error(buffer.Write(addonsBytes)),
+	)
 
 	if vc.dst.Mux {
-		buf.WriteByte(CommandMux)
+		buf.Must(buffer.WriteByte(CommandMux))
 	} else {
 		if vc.dst.UDP {
-			buf.WriteByte(CommandUDP)
+			buf.Must(buffer.WriteByte(CommandUDP))
 		} else {
-			buf.WriteByte(CommandTCP)
+			buf.Must(buffer.WriteByte(CommandTCP))
 		}
 
-		// Port AddrType Addr
-		binary.Write(buf, binary.BigEndian, vc.dst.Port)
-		buf.WriteByte(vc.dst.AddrType)
-		buf.Write(vc.dst.Addr)
+		binary.BigEndian.PutUint16(buffer.Extend(2), vc.dst.Port)
+		buf.Must(
+			buffer.WriteByte(vc.dst.AddrType),
+			buf.Error(buffer.Write(vc.dst.Addr)),
+		)
 	}
 
-	_, err := vc.Conn.Write(buf.Bytes())
-	return err
+	_, err = vc.ExtendedConn.Write(buffer.Bytes())
+	return
 }
 
 func (vc *Conn) recvResponse() error {
 	var err error
-	buf := make([]byte, 1)
-	_, err = io.ReadFull(vc.Conn, buf)
+	var buf [1]byte
+	_, err = io.ReadFull(vc.ExtendedConn, buf[:])
 	if err != nil {
 		return err
 	}
@@ -82,25 +109,29 @@ func (vc *Conn) recvResponse() error {
 		return errors.New("unexpected response version")
 	}
 
-	_, err = io.ReadFull(vc.Conn, buf)
+	_, err = io.ReadFull(vc.ExtendedConn, buf[:])
 	if err != nil {
 		return err
 	}
 
 	length := int64(buf[0])
 	if length != 0 { // addon data length > 0
-		io.CopyN(io.Discard, vc.Conn, length) // just discard
+		io.CopyN(io.Discard, vc.ExtendedConn, length) // just discard
 	}
 
 	return nil
 }
 
+func (vc *Conn) Upstream() any {
+	return vc.ExtendedConn
+}
+
 // newConn return a Conn instance
 func newConn(conn net.Conn, client *Client, dst *DstAddr) (*Conn, error) {
 	c := &Conn{
-		Conn: conn,
-		id:   client.uuid,
-		dst:  dst,
+		ExtendedConn: N.NewExtendedConn(conn),
+		id:           client.uuid,
+		dst:          dst,
 	}
 
 	if !dst.UDP && client.Addons != nil {
