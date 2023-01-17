@@ -84,6 +84,14 @@ func (tt *tcpTracker) Upstream() any {
 	return tt.Conn
 }
 
+func (tt *tcpTracker) ReaderReplaceable() bool {
+	return false
+}
+
+func (tt *tcpTracker) WriterReplaceable() bool {
+	return false
+}
+
 func NewTCPTracker(conn C.Conn, manager *Manager, metadata *C.Metadata, rule C.Rule) *tcpTracker {
 	uuid, _ := uuid.NewV4()
 	if conn != nil {
