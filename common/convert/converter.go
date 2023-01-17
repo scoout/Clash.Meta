@@ -81,7 +81,7 @@ func ConvertsV2Ray(buf []byte) ([]map[string]any, error) {
 			trojan["port"] = urlTrojan.Port()
 			trojan["password"] = urlTrojan.User.Username()
 			trojan["udp"] = true
-			trojan["skip-cert-verify"] = false
+			trojan["skip-cert-verify"] = true
 
 			sni := query.Get("sni")
 			if sni != "" {
@@ -175,7 +175,7 @@ func ConvertsV2Ray(buf []byte) ([]map[string]any, error) {
 			vmess["udp"] = true
 			vmess["xudp"] = true
 			vmess["tls"] = false
-			vmess["skip-cert-verify"] = false
+			vmess["skip-cert-verify"] = true
 
 			vmess["cipher"] = "auto"
 			if cipher, ok := values["scy"]; ok && cipher != "" {
