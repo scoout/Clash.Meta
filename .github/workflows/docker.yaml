@@ -1,10 +1,8 @@
 name: Docker
 
 on:
+  workflow_dispatch:
   push:
-    branches:
-      - Beta
-      - Alpha
     tags:
       - "v*"
 env:

@@ -65,11 +65,8 @@ func (tt *tcpTracker) Write(b []byte) (int, error) {
 }
 
 func (tt *tcpTracker) WriteBuffer(buffer *buf.Buffer) (err error) {
+	upload := int64(buffer.Len())
 	err = tt.extendedWriter.WriteBuffer(buffer)
-	var upload int64
-	if err != nil {
-		upload = int64(buffer.Len())
-	}
 	tt.manager.PushUploaded(upload)
 	tt.UploadTotal.Add(upload)
 	return
@@ -82,6 +79,14 @@ func (tt *tcpTracker) Close() error {
 
 func (tt *tcpTracker) Upstream() any {
 	return tt.Conn
+}
+
+func (tt *tcpTracker) ReaderReplaceable() bool {
+	return false
+}
+
+func (tt *tcpTracker) WriterReplaceable() bool {
+	return false
 }
 
 func NewTCPTracker(conn C.Conn, manager *Manager, metadata *C.Metadata, rule C.Rule) *tcpTracker {
