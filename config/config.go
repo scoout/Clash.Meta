@@ -381,13 +381,8 @@ func UnmarshalRawConfig(buf []byte) (*RawConfig, error) {
 				IPCIDR:    []string{},
 				GeoSite:   []string{},
 			},
-			DefaultNameserver: []string{
-				"8.8.8.8",
-				"1.0.0.1",
-			},
-			NameServer: []string{
-				"1.1.1.1",
-			},
+			DefaultNameserver: []string{},
+			NameServer: []string{},
 			FakeIPFilter: []string{},
 		},
 		Sniffer: RawSniffer{
