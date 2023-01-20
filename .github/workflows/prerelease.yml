@@ -2,6 +2,9 @@ name: Prerelease
 on:
   workflow_dispatch:
   push:
+    paths-ignore:
+      - '!**/README.md'
+      - '!docs/**'
     branches:
       - Alpha
       - Beta
@@ -9,6 +12,7 @@ on:
     branches:
       - Alpha
       - Beta
+
 jobs:
   Build:
     permissions: write-all
