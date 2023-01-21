@@ -1,15 +1,16 @@
-name: Prerelease
+name: Prerelease build
 on:
-  workflow_dispatch:
   push:
-    paths:
-      - '!README.md'
-      - '!docs/**'
     branches:
       - Alpha
-  pull_request_target:
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+      - '!.github/workflows/prerelease.yml'
+  pull_request:
     branches:
       - Alpha
+
 jobs:
   Build:
     permissions: write-all
