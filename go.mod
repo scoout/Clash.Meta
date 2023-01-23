@@ -4,17 +4,16 @@ go 1.19
 
 require (
 	github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da
-	github.com/cilium/ebpf v0.9.3
+	github.com/cilium/ebpf v0.10.0
 	github.com/coreos/go-iptables v0.6.0
 	github.com/database64128/tfo-go/v2 v2.0.2
-	github.com/dlclark/regexp2 v1.7.0
+	github.com/dlclark/regexp2 v1.8.0
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/go-chi/cors v1.2.1
 	github.com/go-chi/render v1.0.2
 	github.com/gofrs/uuid v4.3.1+incompatible
 	github.com/google/gopacket v1.1.19
 	github.com/gorilla/websocket v1.5.0
-	github.com/hashicorp/golang-lru v0.5.4
 	github.com/insomniacslk/dhcp v0.0.0-20221215072855-de60144f33f8
 	github.com/jpillora/backoff v1.0.0
 	github.com/lunixbochs/struc v0.0.0-20200707160740-784aaebc1d40
