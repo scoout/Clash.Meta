@@ -180,7 +180,7 @@ jobs:
           deleteOnlyFromDrafts: false
 
       - name: Tag Repo
-        uses: richardsimko/update-tag@v1.0.7
+        uses: richardsimko/update-tag@v1.0.6
         with:
           tag_name: Prerelease-${{ github.ref_name }}
         env:
