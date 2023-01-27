@@ -17,6 +17,13 @@ find-process-mode: strict
 
 mode: rule
 
+#自定义 geox-url
+geox-url:
+  geoip: "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat"
+  geosite: "https://cdn.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat"
+  mmdb: "https://cdn.jsdelivr.net/gh/Loyalsoldier/geoip@release/Country.mmdb"
+
+
 log-level: debug # 日志等级 silent/error/warning/info/debug
 
 ipv6: true # 开启 IPv6 总开关，关闭阻断所有 IPv6 链接和屏蔽 DNS 请求 AAAA 记录
@@ -103,7 +110,7 @@ sniffer:
     HTTP:
       # 需要嗅探的端口
 
-      ports: [80, 8080-8880]
+      ports: [ 80, 8080-8880 ]
       # 可覆盖 sniffer.override-destination
       override-destination: true
   force-domain:
@@ -149,7 +156,7 @@ tunnels:
   - tcp/udp,127.0.0.1:6553,114.114.114.114:53,proxy
   - tcp,127.0.0.1:6666,rds.mysql.com:3306,vpn
   # full yaml config
-  - network: [tcp, udp]
+  - network: [ tcp, udp ]
     address: 127.0.0.1:7777
     target: target.com
     proxy: proxy
@@ -250,12 +257,12 @@ proxies:
     password:
       "password"
       # udp: true
-      # udp-over-tcp: false
-      # ip-version: ipv4 # 设置节点使用 IP 版本，可选：dual，ipv4，ipv6，ipv4-prefer，ipv6-prefer。默认使用 dual
-      # ipv4：仅使用 IPv4  ipv6：仅使用 IPv6
-      # ipv4-prefer：优先使用 IPv4 对于 TCP 会进行双栈解析，并发链接但是优先使用 IPv4 链接,
-      # UDP 则为双栈解析，获取结果中的第一个 IPv4
-      # ipv6-prefer 同 ipv4-prefer
+    # udp-over-tcp: false
+    # ip-version: ipv4 # 设置节点使用 IP 版本，可选：dual，ipv4，ipv6，ipv4-prefer，ipv6-prefer。默认使用 dual
+    # ipv4：仅使用 IPv4  ipv6：仅使用 IPv6
+    # ipv4-prefer：优先使用 IPv4 对于 TCP 会进行双栈解析，并发链接但是优先使用 IPv4 链接,
+    # UDP 则为双栈解析，获取结果中的第一个 IPv4
+    # ipv6-prefer 同 ipv4-prefer
     # 现有协议都支持此参数，TCP 效果仅在开启 tcp-concurrent 生效
   - name: "ss2"
     type: ss
@@ -527,6 +534,8 @@ proxies:
     private-key: eCtXsJZ27+4PbhDkHnB923tkUn2Gj59wZw5wFA75MnU=
     public-key: Cr8hWlKvtDt7nrvf+f0brNQQzabAqrjfBvas9pmowjo=
     udp: true
+#    reserved: 'U4An'
+
 
   - name: tuic
     server: www.example.com
@@ -586,7 +595,7 @@ proxy-groups:
       - vmess1
     # tolerance: 150
     # lazy: true
-    url: "http://www.gstatic.com/generate_204"
+    url: "https://cp.cloudflare.com/generate_204"
     interval: 300
 
   # fallback 将按照 url 测试结果按照节点顺序选择
@@ -596,7 +605,7 @@ proxy-groups:
       - ss1
       - ss2
       - vmess1
-    url: "http://www.gstatic.com/generate_204"
+    url: "https://cp.cloudflare.com/generate_204"
     interval: 300
 
   # load-balance 将按照算法随机选择节点
@@ -606,7 +615,7 @@ proxy-groups:
       - ss1
       - ss2
       - vmess1
-    url: "http://www.gstatic.com/generate_204"
+    url: "https://cp.cloudflare.com/generate_204"
     interval: 300
     # strategy: consistent-hashing # 可选 round-robin 和 sticky-sessions
 
@@ -648,14 +657,14 @@ proxy-providers:
       enable: true
       interval: 600
       # lazy: true
-      url: http://www.gstatic.com/generate_204
+      url: https://cp.cloudflare.com/generate_204
   test:
     type: file
     path: /test.yaml
     health-check:
       enable: true
       interval: 36000
-      url: http://www.gstatic.com/generate_204
+      url: https://cp.cloudflare.com/generate_204
 rule-providers:
   rule1:
     behavior: classical # domain ipcidr
@@ -793,7 +802,7 @@ listeners:
     listen: 0.0.0.0
     # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
     # proxy: proxy # 如果不为空则直接将该入站流量交由指定proxy处理(当proxy不为空时，这里的proxy名称必须合法，否则会出错)
-    network: [tcp, udp]
+    network: [ tcp, udp ]
     target: target.com
 
   - name: tun-in-1

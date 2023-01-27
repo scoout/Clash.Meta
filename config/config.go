@@ -4,7 +4,7 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
-	"net"
+    "net"
 	"net/netip"
 	"net/url"
 	"os"
@@ -828,18 +828,17 @@ func parseHosts(cfg *RawConfig) (*trie.DomainTrie[netip.Addr], error) {
 }
 
 func hostWithDefaultPort(host string, defPort string) (string, error) {
-	if !strings.Contains(host, ":") {
-		host += ":"
-	}
-
 	hostname, port, err := net.SplitHostPort(host)
-	if err != nil {
+    if err != nil&&!strings.Contains(err.Error(),"missing port in address") {
 		return "", err
 	}
 
 	if port == "" {
 		port = defPort
 	}
+    if hostname==""{
+        hostname=host
+    }
 
 	return net.JoinHostPort(hostname, port), nil
 }
@@ -848,10 +847,7 @@ func parseNameServer(servers []string, preferH3 bool) ([]dns.NameServer, error) 
 	var nameservers []dns.NameServer
 
 	for idx, server := range servers {
-		// parse without scheme .e.g 8.8.8.8:53
-		if !strings.Contains(server, "://") {
-			server = "udp://" + server
-		}
+		server = parsePureDNSServer(server)
 		u, err := url.Parse(server)
 		if err != nil {
 			return nil, fmt.Errorf("DNS NameServer[%d] format error: %s", idx, err.Error())
@@ -927,6 +923,24 @@ func parseNameServer(servers []string, preferH3 bool) ([]dns.NameServer, error) 
 	return nameservers, nil
 }
 
+func parsePureDNSServer(server string) string {
+	addPre := func(server string) string {
+		return "udp://" + server
+	}
+
+    if ip,err := netip.ParseAddr(server); err != nil {
+		if strings.Contains(server, "://") {
+			return server
+		}
+        return addPre(server)
+	} else {
+        if ip.Is4(){
+            return addPre(server)
+        }else{
+            return addPre("["+server+"]")
+        }
+	}
+}
 func parseNameServerPolicy(nsPolicy map[string]string, preferH3 bool) (map[string]dns.NameServer, error) {
 	policy := map[string]dns.NameServer{}
 
