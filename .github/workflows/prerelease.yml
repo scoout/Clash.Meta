@@ -21,58 +21,45 @@ jobs:
       fail-fast: false
       matrix:
         job:
-          - {
-              type: "WithoutCGO",
-              target: "linux-amd64 linux-amd64-compatible",
-              id: "1",
-            }
-          - {
-              type: "WithoutCGO",
-              target: "linux-armv5 linux-armv6 linux-armv7",
-              id: "2",
-            }
-          - {
-              type: "WithoutCGO",
-              target: "linux-arm64 linux-mips64 linux-mips64le",
-              id: "3",
-            }
-          - {
-              type: "WithoutCGO",
-              target: "linux-mips-softfloat linux-mips-hardfloat linux-mipsle-softfloat linux-mipsle-hardfloat",
-              id: "4",
-            }
-          - {
-              type: "WithoutCGO",
-              target: "freebsd-386 freebsd-amd64 freebsd-arm64",
-              id: "5",
-            }
-          - {
-              type: "WithoutCGO",
-              target: "windows-amd64-compatible windows-amd64 windows-386",
-              id: "6",
-            }
-          - {
-              type: "WithoutCGO",
-              target: "windows-arm64 windows-arm32v7",
-              id: "7",
-            }
-          - {
-              type: "WithoutCGO",
-              target: "darwin-amd64 darwin-arm64 android-arm64",
-              id: "8",
-            }
-          - { type: "WithCGO", target: "windows/*", id: "1" }
-          - { type: "WithCGO", target: "linux/386,linux/amd64", id: "2" }
-          - { type: "WithCGO", target: "linux/arm64,linux/riscv64", id: "3" }
-          - {
-              type: "WithCGO",
-              target: "linux/arm,linux/arm-6,linux/arm-7",
-              id: "4",
-            }
-          - { type: "WithCGO", target: "linux/mips,linux/mipsle", id: "5" }
-          - { type: "WithCGO", target: "linux/mips64,linux/mips64le", id: "6" }
-          - { type: "WithCGO", target: "darwin-10.16/*", id: "7" }
-          - { type: "WithCGO", target: "android", id: "8" }
+          - { type: "WithoutCGO", target: "linux-amd64", id: "1" }
+          - { type: "WithoutCGO", target: "linux-amd64-compatible", id: "2" }
+          - { type: "WithoutCGO", target: "linux-armv5", id: "3" }
+          - { type: "WithoutCGO", target: "linux-armv6", id: "4" }
+          - { type: "WithoutCGO", target: "linux-armv7", id: "5" }
+          - { type: "WithoutCGO", target: "linux-arm64", id: "6" }
+          - { type: "WithoutCGO", target: "linux-mips64", id: "7" }
+          - { type: "WithoutCGO", target: "linux-mips64le", id: "8" }
+          - { type: "WithoutCGO", target: "linux-mipsle-hardfloat", id: "9" }
+          - { type: "WithoutCGO", target: "linux-mipsle-softfloat", id: "10" }
+          - { type: "WithoutCGO", target: "linux-mips-hardfloat ", id: "11" }
+          - { type: "WithoutCGO", target: "linux-mips-softfloat", id: "12" }
+          # - {
+              # type: "WithoutCGO",
+              # target: "freebsd-386 freebsd-amd64 freebsd-arm64",
+              # id: "5",
+            # }
+          - { type: "WithoutCGO", target: "windows-amd64-compatible", id: "13" }
+          - { type: "WithoutCGO", target: "windows-amd64", id: "14" }
+          - { type: "WithoutCGO", target: "windows-386", id: "15" }
+          - { type: "WithoutCGO", target: "windows-arm64", id: "16" }
+          - { type: "WithoutCGO", target: "windows-arm32v7", id: "17" }
+          # - {
+              # type: "WithoutCGO",
+              # target: "darwin-amd64 darwin-arm64 android-arm64",
+              # id: "8",
+            # }
+          # - { type: "WithCGO", target: "windows/*", id: "1" }
+          # - { type: "WithCGO", target: "linux/386,linux/amd64", id: "2" }
+          # - { type: "WithCGO", target: "linux/arm64,linux/riscv64", id: "3" }
+          # - {
+              # type: "WithCGO",
+              # target: "linux/arm,linux/arm-6,linux/arm-7",
+              # id: "4",
+            # }
+          # - { type: "WithCGO", target: "linux/mips,linux/mipsle", id: "5" }
+          # - { type: "WithCGO", target: "linux/mips64,linux/mips64le", id: "6" }
+          # - { type: "WithCGO", target: "darwin-10.16/*", id: "7" }
+          - { type: "WithCGO", target: "android", id: "1" }
 
     steps:
       - name: Check out code into the Go module directory
@@ -234,6 +221,8 @@ jobs:
     permissions: write-all
     needs: [Build]
     runs-on: ubuntu-latest
+    if: ${{ startsWith(github.event.head_commit.message, '[docker]') }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -306,6 +295,7 @@ jobs:
         run: |
           mkdir upload
           find artifacts -name "*.gz" -exec cp {} upload \;
+          find artifacts -name "*.zip" -exec cp {} upload \;
           
           function upload() {
             for gz in $@; do
