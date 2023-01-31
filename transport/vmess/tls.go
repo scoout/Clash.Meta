@@ -5,15 +5,20 @@ import (
 	"crypto/tls"
 	"net"
 
+	"github.com/Dreamacro/clash/log"
+	"github.com/Dreamacro/clash/transport"
+	utls "github.com/refraction-networking/utls"
+
 	tlsC "github.com/Dreamacro/clash/component/tls"
 	C "github.com/Dreamacro/clash/constant"
 )
 
 type TLSConfig struct {
-	Host           string
-	SkipCertVerify bool
-	FingerPrint    string
-	NextProtos     []string
+	Host              string
+	SkipCertVerify    bool
+	FingerPrint       string
+	ClientFingerprint string
+	NextProtos        []string
 }
 
 func StreamTLSConn(conn net.Conn, cfg *TLSConfig) (net.Conn, error) {
@@ -32,11 +37,29 @@ func StreamTLSConn(conn net.Conn, cfg *TLSConfig) (net.Conn, error) {
 		}
 	}
 
+	if len(cfg.ClientFingerprint) != 0 {
+		if fingerprint, exists := transport.GetFingerprint(cfg.ClientFingerprint); exists {
+			log.Debugln("using HelloID:%s", fingerprint)
+
+			utlsConn := utls.UClient(conn, transport.CopyConfig(tlsConfig), utls.ClientHelloID{
+				Client:  fingerprint.Client,
+				Version: fingerprint.Version,
+				Seed:    nil,
+			})
+
+			ctx, cancel := context.WithTimeout(context.Background(), C.DefaultTLSTimeout)
+			defer cancel()
+
+			err := utlsConn.HandshakeContext(ctx)
+			return utlsConn, err
+		}
+	}
+
 	tlsConn := tls.Client(conn, tlsConfig)
 
-	// fix tls handshake not timeout
 	ctx, cancel := context.WithTimeout(context.Background(), C.DefaultTLSTimeout)
 	defer cancel()
+
 	err := tlsConn.HandshakeContext(ctx)
 	return tlsConn, err
 }

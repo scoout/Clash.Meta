@@ -60,6 +60,7 @@ type VmessOption struct {
 	PacketEncoding      string       `proxy:"packet-encoding,omitempty"`
 	GlobalPadding       bool         `proxy:"global-padding,omitempty"`
 	AuthenticatedLength bool         `proxy:"authenticated-length,omitempty"`
+	ClientFingerprint   string       `proxy:"client-fingerprint,omitempty"`
 }
 
 type HTTPOptions struct {
@@ -134,8 +135,9 @@ func (v *Vmess) StreamConn(c net.Conn, metadata *C.Metadata) (net.Conn, error) {
 		if v.option.TLS {
 			host, _, _ := net.SplitHostPort(v.addr)
 			tlsOpts := &clashVMess.TLSConfig{
-				Host:           host,
-				SkipCertVerify: v.option.SkipCertVerify,
+				Host:              host,
+				SkipCertVerify:    v.option.SkipCertVerify,
+				ClientFingerprint: v.option.ClientFingerprint,
 			}
 
 			if v.option.ServerName != "" {
@@ -160,9 +162,10 @@ func (v *Vmess) StreamConn(c net.Conn, metadata *C.Metadata) (net.Conn, error) {
 	case "h2":
 		host, _, _ := net.SplitHostPort(v.addr)
 		tlsOpts := clashVMess.TLSConfig{
-			Host:           host,
-			SkipCertVerify: v.option.SkipCertVerify,
-			NextProtos:     []string{"h2"},
+			Host:              host,
+			SkipCertVerify:    v.option.SkipCertVerify,
+			NextProtos:        []string{"h2"},
+			ClientFingerprint: v.option.ClientFingerprint,
 		}
 
 		if v.option.ServerName != "" {
@@ -187,8 +190,9 @@ func (v *Vmess) StreamConn(c net.Conn, metadata *C.Metadata) (net.Conn, error) {
 		if v.option.TLS {
 			host, _, _ := net.SplitHostPort(v.addr)
 			tlsOpts := &clashVMess.TLSConfig{
-				Host:           host,
-				SkipCertVerify: v.option.SkipCertVerify,
+				Host:              host,
+				SkipCertVerify:    v.option.SkipCertVerify,
+				ClientFingerprint: v.option.ClientFingerprint,
 			}
 
 			if v.option.ServerName != "" {
@@ -418,6 +422,10 @@ func NewVmess(option VmessOption) (*Vmess, error) {
 
 		v.gunTLSConfig = tlsConfig
 		v.gunConfig = gunConfig
+		if len(v.option.ClientFingerprint) != 0 {
+			v.transport = gun.NewHTTP2ClientWithFP(dialFn, tlsConfig, v.option.ClientFingerprint)
+			return v, nil
+		}
 		v.transport = gun.NewHTTP2Client(dialFn, tlsConfig)
 	}
 	return v, nil

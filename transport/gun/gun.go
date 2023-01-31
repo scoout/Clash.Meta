@@ -10,6 +10,9 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/Dreamacro/clash/log"
+	"github.com/Dreamacro/clash/transport"
+	utls "github.com/refraction-networking/utls"
 	"io"
 	"net"
 	"net/http"
@@ -197,17 +200,73 @@ func NewHTTP2Client(dialFn DialFn, tlsConfig *tls.Config) *TransportWrap {
 		}
 
 		wrap.remoteAddr = pconn.RemoteAddr()
-		cn := tls.Client(pconn, cfg)
-		if err := cn.HandshakeContext(ctx); err != nil {
+
+		conn := tls.Client(pconn, cfg)
+		if err := conn.HandshakeContext(ctx); err != nil {
 			pconn.Close()
 			return nil, err
 		}
-		state := cn.ConnectionState()
+		state := conn.ConnectionState()
 		if p := state.NegotiatedProtocol; p != http2.NextProtoTLS {
-			cn.Close()
+			conn.Close()
 			return nil, fmt.Errorf("http2: unexpected ALPN protocol %s, want %s", p, http2.NextProtoTLS)
 		}
-		return cn, nil
+		return conn, nil
+	}
+
+	wrap.Transport = &http2.Transport{
+		DialTLSContext:     dialFunc,
+		TLSClientConfig:    tlsConfig,
+		AllowHTTP:          false,
+		DisableCompression: true,
+		PingTimeout:        0,
+	}
+
+	return &wrap
+}
+
+func NewHTTP2ClientWithFP(dialFn DialFn, tlsConfig *tls.Config, fingerprint string) *TransportWrap {
+	wrap := TransportWrap{}
+	dialFunc := func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
+		pconn, err := dialFn(network, addr)
+		if err != nil {
+			return nil, err
+		}
+
+		wrap.remoteAddr = pconn.RemoteAddr()
+		if len(fingerprint) != 0 {
+			if fingerprint, exists := transport.GetFingerprint(fingerprint); exists {
+				log.Debugln("using HelloID:%s", fingerprint)
+
+				utlsConn := utls.UClient(pconn, transport.CopyConfig(cfg), utls.ClientHelloID{
+					Client:  fingerprint.Client,
+					Version: fingerprint.Version,
+					Seed:    nil,
+				})
+				if err := utlsConn.HandshakeContext(ctx); err != nil {
+					pconn.Close()
+					return nil, err
+				}
+				state := utlsConn.ConnectionState()
+				if p := state.NegotiatedProtocol; p != http2.NextProtoTLS {
+					utlsConn.Close()
+					return nil, fmt.Errorf("http2: unexpected ALPN protocol %s, want %s", p, http2.NextProtoTLS)
+				}
+				return utlsConn, nil
+			}
+		}
+
+		conn := tls.Client(pconn, cfg)
+		if err := conn.HandshakeContext(ctx); err != nil {
+			pconn.Close()
+			return nil, err
+		}
+		state := conn.ConnectionState()
+		if p := state.NegotiatedProtocol; p != http2.NextProtoTLS {
+			conn.Close()
+			return nil, fmt.Errorf("http2: unexpected ALPN protocol %s, want %s", p, http2.NextProtoTLS)
+		}
+		return conn, nil
 	}
 
 	wrap.Transport = &http2.Transport{

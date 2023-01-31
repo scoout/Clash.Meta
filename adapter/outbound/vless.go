@@ -45,27 +45,28 @@ type Vless struct {
 
 type VlessOption struct {
 	BasicOption
-	Name           string            `proxy:"name"`
-	Server         string            `proxy:"server"`
-	Port           int               `proxy:"port"`
-	UUID           string            `proxy:"uuid"`
-	Flow           string            `proxy:"flow,omitempty"`
-	FlowShow       bool              `proxy:"flow-show,omitempty"`
-	TLS            bool              `proxy:"tls,omitempty"`
-	UDP            bool              `proxy:"udp,omitempty"`
-	PacketAddr     bool              `proxy:"packet-addr,omitempty"`
-	XUDP           bool              `proxy:"xudp,omitempty"`
-	PacketEncoding string            `proxy:"packet-encoding,omitempty"`
-	Network        string            `proxy:"network,omitempty"`
-	HTTPOpts       HTTPOptions       `proxy:"http-opts,omitempty"`
-	HTTP2Opts      HTTP2Options      `proxy:"h2-opts,omitempty"`
-	GrpcOpts       GrpcOptions       `proxy:"grpc-opts,omitempty"`
-	WSOpts         WSOptions         `proxy:"ws-opts,omitempty"`
-	WSPath         string            `proxy:"ws-path,omitempty"`
-	WSHeaders      map[string]string `proxy:"ws-headers,omitempty"`
-	SkipCertVerify bool              `proxy:"skip-cert-verify,omitempty"`
-	Fingerprint    string            `proxy:"fingerprint,omitempty"`
-	ServerName     string            `proxy:"servername,omitempty"`
+	Name              string            `proxy:"name"`
+	Server            string            `proxy:"server"`
+	Port              int               `proxy:"port"`
+	UUID              string            `proxy:"uuid"`
+	Flow              string            `proxy:"flow,omitempty"`
+	FlowShow          bool              `proxy:"flow-show,omitempty"`
+	TLS               bool              `proxy:"tls,omitempty"`
+	UDP               bool              `proxy:"udp,omitempty"`
+	PacketAddr        bool              `proxy:"packet-addr,omitempty"`
+	XUDP              bool              `proxy:"xudp,omitempty"`
+	PacketEncoding    string            `proxy:"packet-encoding,omitempty"`
+	Network           string            `proxy:"network,omitempty"`
+	HTTPOpts          HTTPOptions       `proxy:"http-opts,omitempty"`
+	HTTP2Opts         HTTP2Options      `proxy:"h2-opts,omitempty"`
+	GrpcOpts          GrpcOptions       `proxy:"grpc-opts,omitempty"`
+	WSOpts            WSOptions         `proxy:"ws-opts,omitempty"`
+	WSPath            string            `proxy:"ws-path,omitempty"`
+	WSHeaders         map[string]string `proxy:"ws-headers,omitempty"`
+	SkipCertVerify    bool              `proxy:"skip-cert-verify,omitempty"`
+	Fingerprint       string            `proxy:"fingerprint,omitempty"`
+	ServerName        string            `proxy:"servername,omitempty"`
+	ClientFingerprint string            `proxy:"client-fingerprint,omitempty"`
 }
 
 func (v *Vless) StreamConn(c net.Conn, metadata *C.Metadata) (net.Conn, error) {
@@ -179,9 +180,10 @@ func (v *Vless) streamTLSOrXTLSConn(conn net.Conn, isH2 bool) (net.Conn, error) 
 
 	} else if v.option.TLS {
 		tlsOpts := vmess.TLSConfig{
-			Host:           host,
-			SkipCertVerify: v.option.SkipCertVerify,
-			FingerPrint:    v.option.Fingerprint,
+			Host:              host,
+			SkipCertVerify:    v.option.SkipCertVerify,
+			FingerPrint:       v.option.Fingerprint,
+			ClientFingerprint: v.option.ClientFingerprint,
 		}
 
 		if isH2 {
@@ -542,6 +544,10 @@ func NewVless(option VlessOption) (*Vless, error) {
 
 		v.gunTLSConfig = tlsConfig
 		v.gunConfig = gunConfig
+		if len(v.option.ClientFingerprint) != 0 {
+			v.transport = gun.NewHTTP2ClientWithFP(dialFn, tlsConfig, v.option.ClientFingerprint)
+			return v, nil
+		}
 		v.transport = gun.NewHTTP2Client(dialFn, tlsConfig)
 	}
 
