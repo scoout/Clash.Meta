@@ -32,7 +32,7 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/xtls/go v0.0.0-20220914232946-0441cf4cf837
-	go.etcd.io/bbolt v1.3.6
+	go.etcd.io/bbolt v1.3.7
 	go.uber.org/atomic v1.10.0
 	go.uber.org/automaxprocs v1.5.1
 	golang.org/x/crypto v0.5.0
