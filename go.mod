@@ -14,6 +14,7 @@ require (
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/google/gopacket v1.1.19
 	github.com/gorilla/websocket v1.5.0
+	github.com/hashicorp/golang-lru v0.5.4
 	github.com/insomniacslk/dhcp v0.0.0-20221215072855-de60144f33f8
 	github.com/jpillora/backoff v1.0.0
 	github.com/lunixbochs/struc v0.0.0-20200707160740-784aaebc1d40

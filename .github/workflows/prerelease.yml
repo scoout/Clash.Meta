@@ -43,6 +43,7 @@ jobs:
           - { type: "WithoutCGO", target: "windows-386", id: "15" }
           - { type: "WithoutCGO", target: "windows-arm64", id: "16" }
           - { type: "WithoutCGO", target: "windows-arm32v7", id: "17" }
+          - { type: "WithoutCGO", target: "android-arm64", id: "18" }
           # - {
               # type: "WithoutCGO",
               # target: "darwin-amd64 darwin-arm64 android-arm64",
@@ -132,8 +133,8 @@ jobs:
           CC=${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin
           CGO_ENABLED=1 CC=${CC}/aarch64-linux-android33-clang GOARCH=arm64 GOOS=android go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o bin/${NAME}-android-arm64
           CGO_ENABLED=1 CC=${CC}/armv7a-linux-androideabi33-clang GOARCH=arm GOOS=android GOARM=7 go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o bin/${NAME}-android-armv7
-          CGO_ENABLED=1 CC=${CC}/i686-linux-android33-clang GOARCH=386 GOOS=android go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o bin/${NAME}-android-x86
-          CGO_ENABLED=1 CC=${CC}/x86_64-linux-android33-clang GOARCH=amd64 GOOS=android go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o bin/${NAME}-android-x64
+          # CGO_ENABLED=1 CC=${CC}/i686-linux-android33-clang GOARCH=386 GOOS=android go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o bin/${NAME}-android-x86
+          # CGO_ENABLED=1 CC=${CC}/x86_64-linux-android33-clang GOARCH=amd64 GOOS=android go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o bin/${NAME}-android-x64
 
       - name: Set up xgo
         if: ${{ matrix.job.type=='WithCGO' && matrix.job.target!='android' }}

@@ -59,6 +59,11 @@ func Start(addr string, tlsAddr string, secret string,
 		MaxAge:         300,
 	})
 	r.Use(corsM.Handler)
+
+	r.Group(func(r chi.Router) {
+		r.Mount("/debug", debugRouter())
+	})
+
 	r.Group(func(r chi.Router) {
 		r.Use(authentication)
 		r.Get("/", hello)
